@@ -10,21 +10,28 @@ class SplashViewModel extends ChangeNotifier {
   String? _navigationPath;
   String? get navigationPath => _navigationPath;
 
+  bool _hasNavigated = false; // Flag to prevent multiple navigations
+
   SplashViewModel(this._authService) {
-    _handleStartUpLogic();
+    _handleStartupLogic();
   }
 
-  Future<void> _handleStartUpLogic() async {
-    // Listen to the first event from the auth state stream.
+  Future<void> _handleStartupLogic() async {
     _authService.authStateChanges.listen((user) {
-      // Allow animations to run for a minimum duration for a smoother UX.
-      Timer(const Duration(microseconds: 2000), () {
-        if (user == null) {
-          _navigationPath = auth;
+      // Prevent navigation if we have already done so.
+      if (_hasNavigated) return;
+
+      Timer(const Duration(milliseconds: 1500), () {
+        // Double-check after the timer delay.
+        if (_hasNavigated) return;
+
+        if (user != null) {
+          _navigationPath = home; // Or your path from constants
         } else {
-          _navigationPath = home;
+          _navigationPath = auth; // Or your path from constants
         }
-        // Notify listeners that the navigation path is ready.
+
+        _hasNavigated = true; // Set the flag to true
         notifyListeners();
       });
     });

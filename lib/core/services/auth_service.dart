@@ -11,4 +11,32 @@ class AuthService {
   /// Emits `null` if the user is logged out.
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
+  Future<UserCredential> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) {
+    return _firebaseAuth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  Future<UserCredential> createUserWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String username,
+  }) async {
+    final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    await userCredential.user?.updateDisplayName(username);
+    await userCredential.user?.reload();
+    return userCredential;
+  }
+  
+  Future<void> signOut() async {
+    await _firebaseAuth.signOut();
+  }
+
 }

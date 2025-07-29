@@ -5,6 +5,7 @@ import 'package:flutter_chat_app/core/constants/themes.dart';
 import 'package:flutter_chat_app/core/services/auth_service.dart';
 import 'package:flutter_chat_app/core/utils/route_utils.dart';
 import 'package:flutter_chat_app/firebase_options.dart';
+import 'package:flutter_chat_app/ui/screens/auth/auth_viewmodel.dart';
 import 'package:flutter_chat_app/ui/screens/splash/splash_screen.dart';
 import 'package:flutter_chat_app/ui/screens/splash/splash_viewmodel.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -36,6 +37,9 @@ class ChatApp extends StatelessWidget {
             // Provide the SplashViewModel, which depends on AuthService.
             ChangeNotifierProvider<SplashViewModel>(
               create: (context) => SplashViewModel(context.read<AuthService>()),
+            ),
+            ChangeNotifierProvider<AuthViewModel>(
+              create: (context) => AuthViewModel(context.read<AuthService>()),
             ),
           ],
           child: MaterialApp(

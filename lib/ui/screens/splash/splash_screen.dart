@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/paths.dart';
+import 'package:flutter_chat_app/ui/screens/auth/auth_screen.dart';
 import 'package:flutter_chat_app/ui/screens/home/home_screen.dart';
 import 'package:flutter_chat_app/ui/screens/splash/splash_viewmodel.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -29,7 +31,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
 
     // Listen to the navigationPath property of the ViewModel.
     splashViewModel.addListener(() {
-      if (splashViewModel.navigationPath != null) {
+      if (mounted && splashViewModel.navigationPath != null) {
         _navigate(splashViewModel.navigationPath!);
       }
     });
@@ -58,7 +60,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     if (path == home) {
       screen = const HomeScreen();
     } else {
-      screen = const SplashScreen();
+      screen = const AuthScreen();
     }
 
     Navigator.of(context).pushReplacement(
@@ -101,8 +103,8 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   scale: _scaleAnimation,
                   child: Image.asset(
                     logo, // Make sure 'logo' is a valid constant in your paths file
-                    width: 120,
-                    height: 120,
+                    width: 120.w,
+                    height: 120.h,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -111,6 +113,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onPrimary,
+                    fontSize: 24.sp,
                   ),
                 ),
               ],
