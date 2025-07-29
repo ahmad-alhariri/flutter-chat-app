@@ -1,7 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/paths.dart';
+import 'package:flutter_chat_app/ui/screens/auth/auth_screen.dart';
 import 'package:flutter_chat_app/ui/screens/home/home_screen.dart';
+import 'package:flutter_chat_app/ui/screens/splash/splash_viewmodel.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -11,39 +15,37 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
-  // Controller for the background gradient animation
   late AnimationController _backgroundAnimationController;
   late Animation<Alignment> _topAlignmentAnimation;
   late Animation<Alignment> _bottomAlignmentAnimation;
-
-  // NEW: Controller for the logo's pulsating animation
   late AnimationController _logoAnimationController;
   late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
+    _setupAnimations();
 
-    // -- Setup for Background Animation --
-    _backgroundAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    );
+    // Get the ViewModel from Provider, but don't listen for changes yet.
+    final splashViewModel = context.read<SplashViewModel>();
+
+    // Listen to the navigationPath property of the ViewModel.
+    splashViewModel.addListener(() {
+      if (mounted && splashViewModel.navigationPath != null) {
+        _navigate(splashViewModel.navigationPath!);
+      }
+    });
+  }
+
+  void _setupAnimations() {
+    _backgroundAnimationController = AnimationController(vsync: this, duration: const Duration(seconds: 4))
+      ..repeat(reverse: true);
     _topAlignmentAnimation = Tween<Alignment>(begin: Alignment.topLeft, end: Alignment.topRight).animate(_backgroundAnimationController);
     _bottomAlignmentAnimation = Tween<Alignment>(begin: Alignment.bottomLeft, end: Alignment.bottomRight).animate(_backgroundAnimationController);
-    _backgroundAnimationController.repeat(reverse: true);
 
-    _logoAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(
-      CurvedAnimation(parent: _logoAnimationController, curve: Curves.easeInOut),
-    );
-    _logoAnimationController.repeat(reverse: true);
-
-    // -- Navigation Timer --
-    _startTimer();
+    _logoAnimationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))
+      ..repeat(reverse: true);
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.05).animate(CurvedAnimation(parent: _logoAnimationController, curve: Curves.easeInOut));
   }
 
   @override
@@ -53,20 +55,17 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     super.dispose();
   }
 
-  void _startTimer() {
-    Timer(const Duration(seconds: 3), () {
-      _navigate();
-    });
-  }
-
-  void _navigate() {
-    // Todo: check the user's authentication state here.
-    bool isLoggedIn = false; // <-- Placeholder for your auth logic
+  void _navigate(String path) {
+    Widget screen;
+    if (path == home) {
+      screen = const HomeScreen();
+    } else {
+      screen = const AuthScreen();
+    }
 
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-        HomeScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => screen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
@@ -82,7 +81,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     return Scaffold(
       body: Stack(
         children: [
-          // --- Animated Background ---
           AnimatedBuilder(
             animation: _backgroundAnimationController,
             builder: (context, child) {
@@ -97,18 +95,16 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               );
             },
           ),
-          // --- Foreground Content (Logo and Text) ---
           Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // NEW: Wrapped the logo in a ScaleTransition for the animation.
                 ScaleTransition(
                   scale: _scaleAnimation,
                   child: Image.asset(
-                    logo,
-                    width: 120,
-                    height: 120,
+                    logo, // Make sure 'logo' is a valid constant in your paths file
+                    width: 120.w,
+                    height: 120.h,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -117,6 +113,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: colorScheme.onPrimary,
+                    fontSize: 24.sp,
                   ),
                 ),
               ],
