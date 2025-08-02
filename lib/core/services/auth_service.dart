@@ -10,6 +10,7 @@ class AuthService {
   /// Emits a [User] object if the user is logged in.
   /// Emits `null` if the user is logged out.
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+  User? get currentUser => _firebaseAuth.currentUser;
 
   Future<UserCredential> signInWithEmailAndPassword({
     required String email,
