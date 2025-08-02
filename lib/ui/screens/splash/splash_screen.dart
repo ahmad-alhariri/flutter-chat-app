@@ -58,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void _navigate(String path) {
     Widget screen;
     if (path == home) {
-      screen = const HomeScreen();
+      screen = const MainScreen();
     } else {
       screen = const AuthScreen();
     }

@@ -1,11 +1,16 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/themes.dart';
 import 'package:flutter_chat_app/core/services/auth_service.dart';
+import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/utils/route_utils.dart';
 import 'package:flutter_chat_app/firebase_options.dart';
 import 'package:flutter_chat_app/ui/screens/auth/auth_viewmodel.dart';
+import 'package:flutter_chat_app/ui/screens/home/chats_viewmodel.dart';
+import 'package:flutter_chat_app/ui/screens/home/contacts_viewmodel.dart';
+import 'package:flutter_chat_app/ui/screens/home/profile_viewmodel.dart';
 import 'package:flutter_chat_app/ui/screens/splash/splash_screen.dart';
 import 'package:flutter_chat_app/ui/screens/splash/splash_viewmodel.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -30,16 +35,38 @@ class ChatApp extends StatelessWidget {
       builder: (context, child) {
         return MultiProvider(
           providers: [
-            // Provide the AuthService instance.
+            // --- SERVICES ---
             Provider<AuthService>(
               create: (_) => AuthService(FirebaseAuth.instance),
             ),
-            // Provide the SplashViewModel, which depends on AuthService.
+            Provider<DatabaseService>(
+              create: (_) => DatabaseService(FirebaseFirestore.instance),
+            ),
+
+            // --- VIEWMODELS ---
             ChangeNotifierProvider<SplashViewModel>(
               create: (context) => SplashViewModel(context.read<AuthService>()),
             ),
             ChangeNotifierProvider<AuthViewModel>(
-              create: (context) => AuthViewModel(context.read<AuthService>()),
+              create: (context) => AuthViewModel(
+                context.read<AuthService>(),
+                context.read<DatabaseService>(),
+              ),
+            ),
+            ChangeNotifierProvider<ChatsViewModel>(
+              create: (context) => ChatsViewModel(
+                context.read<DatabaseService>(),
+                context.read<AuthService>(),
+              ),
+            ),
+            ChangeNotifierProvider<ContactsViewModel>(
+              create: (context) => ContactsViewModel(
+                context.read<DatabaseService>(),
+                context.read<AuthService>(),
+              ),
+            ),
+            ChangeNotifierProvider<ProfileViewModel>(
+              create: (context) => ProfileViewModel(context.read<AuthService>()),
             ),
           ],
           child: MaterialApp(

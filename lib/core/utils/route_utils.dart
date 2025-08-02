@@ -9,7 +9,7 @@ class RoutUtils{
       case splash:
         return MaterialPageRoute(builder: (context) => SplashScreen());
         case home:
-          return MaterialPageRoute(builder: (context) => HomeScreen());
+          return MaterialPageRoute(builder: (context) => MainScreen());
       default:
         return MaterialPageRoute(
           builder: (context) => const Scaffold(
