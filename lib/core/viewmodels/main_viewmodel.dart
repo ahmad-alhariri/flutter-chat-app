@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/core/enums/enums.dart';
+import 'package:flutter_chat_app/core/other/BaseViewModel.dart';
 
 // ==================================================
 // PURPOSE: Manages the state for the MainScreen, specifically the bottom navigation.
 // ==================================================
-class MainViewModel extends ChangeNotifier {
+class MainViewModel extends BaseViewModel {
   int _currentIndex = 0;
   int get currentIndex => _currentIndex;
 

@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 // PURPOSE: A reusable widget to display a single conversation in the chat list.
 // ==================================================
 class ConversationTile extends StatelessWidget {
-  final UserModel otherUser;
+  final UserModel? otherUser; // Now nullable to handle loading state
   final String lastMessage;
   final DateTime lastMessageTimestamp;
   final int unreadCount;
@@ -25,22 +25,32 @@ class ConversationTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    if (otherUser == null) {
+      // Show a placeholder while the user data is loading.
+      return const ListTile(
+        leading: CircleAvatar(radius: 28),
+        title: Text("Loading..."),
+        subtitle: Text("..."),
+      );
+    }
+
     return ListTile(
       leading: CircleAvatar(
         radius: 28.r,
-        backgroundImage: otherUser.profileImageUrl != null
-            ? NetworkImage(otherUser.profileImageUrl!)
+        backgroundImage: otherUser!.profileImageUrl != null
+            ? NetworkImage(otherUser!.profileImageUrl!)
             : null,
-        child: otherUser.profileImageUrl == null
+        child: otherUser!.profileImageUrl == null
             ? Text(
-          otherUser.username.isNotEmpty ? otherUser.username[0] : '?',
+          otherUser!.username.isNotEmpty ? otherUser!.username[0] : '?',
           style: TextStyle(fontSize: 24.sp, color: Colors.white),
         )
             : null,
         backgroundColor: theme.colorScheme.secondary,
       ),
       title: Text(
-        otherUser.username,
+        otherUser!.username,
         style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
       subtitle: Text(

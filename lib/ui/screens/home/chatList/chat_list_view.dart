@@ -14,13 +14,16 @@ class ChatListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<ChatListViewModel>();
+    final authService = context.read<AuthService>();
+
     return Scaffold(
       appBar: AppBar(
         leading: Padding(
           padding: const EdgeInsets.all(8.0),
           child: CircleAvatar(
-            // Placeholder for user profile picture
-            backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
+            backgroundImage: authService.currentUser?.photoURL != null
+                ? NetworkImage(authService.currentUser!.photoURL!)
+                : null,
           ),
         ),
         title: const Text('Chats', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -53,46 +56,29 @@ class ChatListView extends StatelessWidget {
             itemCount: conversations.length,
             itemBuilder: (context, index) {
               final conversation = conversations[index];
-              return ConversationInfo(conversation: conversation);
+              final currentUserId = authService.currentUser?.uid;
+              final otherUserId = conversation.participantIds.firstWhere((id) => id != currentUserId, orElse: () => '');
+
+              if (otherUserId.isEmpty) return const SizedBox.shrink();
+
+              // Get the user data from the ViewModel's cache.
+              final otherUser = viewModel.userCache[otherUserId];
+
+              return ConversationTile(
+                otherUser: otherUser, // Can be null while loading
+                lastMessage: conversation.lastMessage,
+                lastMessageTimestamp: conversation.lastMessageTimestamp.toDate(),
+                unreadCount: conversation.unreadCount,
+                onTap: () {
+                  if (otherUser != null) {
+                    viewModel.navigateToChat(otherUser);
+                  }
+                },
+              );
             },
           );
         },
       ),
-    );
-  }
-}
-
-/// A helper widget to fetch the other user's info for a conversation tile.
-class ConversationInfo extends StatelessWidget {
-  final ConversationModel conversation;
-  const ConversationInfo({super.key, required this.conversation});
-
-  @override
-  Widget build(BuildContext context) {
-    final dbService = context.read<DatabaseService>();
-    final authService = context.read<AuthService>();
-    final viewModel = context.read<ChatListViewModel>();
-    final currentUserId = authService.currentUser?.uid;
-
-    final otherUserId = conversation.participantIds.firstWhere((id) => id != currentUserId, orElse: () => '');
-
-    if (otherUserId.isEmpty) return const SizedBox.shrink();
-
-    return FutureBuilder<UserModel?>(
-      future: dbService.getUser(otherUserId),
-      builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData) {
-          return const ListTile(title: Text("Loading..."));
-        }
-        final otherUser = userSnapshot.data!;
-        return ConversationTile(
-          otherUser: otherUser,
-          lastMessage: conversation.lastMessage,
-          lastMessageTimestamp: conversation.lastMessageTimestamp.toDate(),
-          unreadCount: conversation.unreadCount,
-          onTap: () => viewModel.navigateToChat(otherUser),
-        );
-      },
     );
   }
 }

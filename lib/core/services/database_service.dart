@@ -35,8 +35,20 @@ class DatabaseService {
       }
       return null;
     } catch (e) {
-      log("Error getting user: $e");
+      print("Error getting user: $e");
       return null;
+    }
+  }
+
+  /// Fetches multiple user documents in a single batch operation.
+  Future<List<UserModel>> getUsersIn(List<String> uids) async {
+    if (uids.isEmpty) return [];
+    try {
+      final querySnapshot = await _firestore.collection('users').where('uid', whereIn: uids).get();
+      return querySnapshot.docs.map((doc) => UserModel.fromMap(doc)).toList();
+    } catch (e) {
+      log("Error getting users in batch: $e");
+      return [];
     }
   }
 
@@ -59,7 +71,6 @@ class DatabaseService {
           .toList();
     });
   }
-
 
   /// Checks if a conversation between two users exists, and creates one if it doesn't.
   /// Returns the unique ID of the conversation.
