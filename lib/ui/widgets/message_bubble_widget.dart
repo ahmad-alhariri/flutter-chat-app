@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+// ==================================================
+// PURPOSE: A widget that displays a single chat message, styled differently
+// based on whether it was sent by the current user or the other user.
+// ==================================================
 class MessageBubble extends StatelessWidget {
   final String text;
   final bool isMe;

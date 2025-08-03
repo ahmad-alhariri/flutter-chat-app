@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+// ==================================================
+// PURPOSE: A reusable, styled text field for forms.
+// ==================================================
 class CustomTextField extends StatelessWidget {
   final String labelText;
   final IconData prefixIcon;

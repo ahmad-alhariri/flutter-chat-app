@@ -11,7 +11,8 @@ class MessageModel {
     required this.timestamp,
   });
 
-  Map<String, dynamic> toJson() {
+  /// Converts this [MessageModel] instance to a JSON map for Firestore.
+  Map<String, dynamic> toMap() {
     return {
       'senderId': senderId,
       'text': text,
@@ -19,7 +20,8 @@ class MessageModel {
     };
   }
 
-  factory MessageModel.fromFirestore(DocumentSnapshot doc) {
+  /// Creates a [MessageModel] instance from a Firestore document.
+  factory MessageModel.fromMap(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return MessageModel(
       senderId: data['senderId'],

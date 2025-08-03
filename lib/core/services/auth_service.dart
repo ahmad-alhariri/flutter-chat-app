@@ -1,5 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+// ==================================================
+// PURPOSE: A dedicated service to handle all Firebase Authentication interactions.
+// This abstracts the Firebase SDK from the rest of the app, making it more modular
+// and easier to test or replace the authentication backend in the future.
+// ==================================================
 class AuthService {
 
   final FirebaseAuth _firebaseAuth;
@@ -10,6 +15,8 @@ class AuthService {
   /// Emits a [User] object if the user is logged in.
   /// Emits `null` if the user is logged out.
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+
+  /// A synchronous getter for the currently logged-in user.
   User? get currentUser => _firebaseAuth.currentUser;
 
   Future<UserCredential> signInWithEmailAndPassword({

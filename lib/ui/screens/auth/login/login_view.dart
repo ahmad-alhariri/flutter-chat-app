@@ -1,13 +1,17 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter_chat_app/core/constants/paths.dart';
 import 'package:flutter_chat_app/core/enums/enums.dart';
-import 'package:flutter_chat_app/ui/screens/auth/auth_viewmodel.dart';
+import 'package:flutter_chat_app/core/viewmodels/auth_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/ui/widgets/beizer_container_widget.dart';
 import 'package:flutter_chat_app/ui/widgets/custom_text_field.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+// ==================================================
+// PURPOSE: The UI for the login screen. It is a "dumb" widget that gets its
+// state and logic from the AuthViewModel.
+// ==================================================
 class LoginView extends StatefulWidget {
   final VoidCallback onToggleView;
   const LoginView({super.key, required this.onToggleView});
@@ -19,12 +23,34 @@ class _LoginViewState extends State<LoginView> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  late AuthViewModel _authViewModel; // Store a reference to the ViewModel
+
+  @override
+  void initState() {
+    super.initState();
+    // Get the ViewModel instance once and add the listener.
+    _authViewModel = context.read<AuthViewModel>();
+    _authViewModel.addListener(_onViewModelUpdate);
+  }
 
   @override
   void dispose() {
+    // Use the stored reference to remove the listener, avoiding context usage.
+    _authViewModel.removeListener(_onViewModelUpdate);
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _onViewModelUpdate() {
+    if (_authViewModel.state == ViewState.Error && _authViewModel.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_authViewModel.errorMessage!),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 
   void _submit() async {
@@ -34,22 +60,13 @@ class _LoginViewState extends State<LoginView> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
-      if (success && mounted) {
-        Navigator.of(context).pushReplacementNamed(home);
-      } else if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(auth.errorMessage ?? 'An unknown error occurred.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
+    // Use context.watch to rebuild the widget when the ViewModel's state changes.
     final viewModel = context.watch<AuthViewModel>();
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;

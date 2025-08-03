@@ -1,16 +1,33 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_chat_app/core/constants/routes.dart';
 import 'package:flutter_chat_app/core/enums/enums.dart';
 import 'package:flutter_chat_app/core/models/user_model.dart';
 import 'package:flutter_chat_app/core/other/BaseViewModel.dart';
 import 'package:flutter_chat_app/core/services/auth_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
+import 'package:flutter_chat_app/core/services/navigation_service.dart';
 
+
+// ==================================================
+// PURPOSE: Manages the state and logic for the authentication process.
+// WORKFLOW: The UI calls methods like `signIn`. This ViewModel sets the state to
+// `Busy`, calls the appropriate services (AuthService, DatabaseService), and upon
+// completion, uses the NavigationService to move to the main app.
+// ==================================================
 class AuthViewModel extends BaseViewModel {
   final AuthService _authService;
   final DatabaseService _databaseService;
-  AuthViewModel(this._authService, this._databaseService);
+  final NavigationService _navigationService;
 
-  Future<bool> signIn(String email, String password) async {
+  AuthViewModel(this._authService, this._databaseService, this._navigationService);
+
+  void clearError() {
+    if (state == ViewState.Error) {
+      setState(ViewState.Idle);
+    }
+  }
+
+  Future<void> signIn(String email, String password) async {
     setState(ViewState.Busy);
     try {
       await _authService.signInWithEmailAndPassword(
@@ -18,7 +35,7 @@ class AuthViewModel extends BaseViewModel {
         password: password,
       );
       setState(ViewState.Idle);
-      return true;
+      _navigationService.navigateToAndRemoveUntil(Routes.main);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         setState(ViewState.Error, message: 'Email or Password is incorrect');
@@ -27,14 +44,12 @@ class AuthViewModel extends BaseViewModel {
       } else {
         setState(ViewState.Error, message: e.message);
       }
-      return false;
     } catch (e) {
       setState(ViewState.Error, message: e.toString());
-      return false;
     }
   }
 
-  Future<bool> signUp(String email, String password, String userName) async {
+  Future<void> signUp(String email, String password, String userName) async {
     setState(ViewState.Busy);
     try {
       UserCredential userCredential = await _authService.createUserWithEmailAndPassword(
@@ -55,7 +70,7 @@ class AuthViewModel extends BaseViewModel {
 
 
       setState(ViewState.Idle);
-      return true;
+      _navigationService.navigateToAndRemoveUntil(Routes.main);
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         setState(
@@ -70,22 +85,8 @@ class AuthViewModel extends BaseViewModel {
       } else {
         setState(ViewState.Error, message: e.message);
       }
-      return false;
     } catch (e) {
       setState(ViewState.Error, message: e.toString());
-      return false;
-    }
-  }
-
-  Future<bool> signOut() async {
-    setState(ViewState.Busy);
-    try {
-      await _authService.signOut();
-      setState(ViewState.Idle);
-      return true;
-    } on FirebaseAuthException catch (e) {
-      setState(ViewState.Error, message: e.message);
-      return false;
     }
   }
 }

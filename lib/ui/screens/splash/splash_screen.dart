@@ -1,12 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/paths.dart';
+import 'package:flutter_chat_app/core/viewmodels/splash_viewmodel.dart';
 import 'package:flutter_chat_app/ui/screens/auth/auth_screen.dart';
 import 'package:flutter_chat_app/ui/screens/home/home_screen.dart';
-import 'package:flutter_chat_app/ui/screens/splash/splash_viewmodel.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+// ==================================================
+// PURPOSE: The initial screen of the app. It displays a logo while the
+// SplashViewModel determines the user's authentication state.
+// ==================================================
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -26,15 +30,9 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     super.initState();
     _setupAnimations();
 
-    // Get the ViewModel from Provider, but don't listen for changes yet.
-    final splashViewModel = context.read<SplashViewModel>();
-
-    // Listen to the navigationPath property of the ViewModel.
-    splashViewModel.addListener(() {
-      if (mounted && splashViewModel.navigationPath != null) {
-        _navigate(splashViewModel.navigationPath!);
-      }
-    });
+    // Trigger the startup logic in the ViewModel. The ViewModel itself
+    // will handle the navigation when it's ready.
+    context.read<SplashViewModel>();
   }
 
   void _setupAnimations() {
@@ -55,24 +53,6 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     super.dispose();
   }
 
-  void _navigate(String path) {
-    Widget screen;
-    if (path == home) {
-      screen = const MainScreen();
-    } else {
-      screen = const AuthScreen();
-    }
-
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => screen,
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          return FadeTransition(opacity: animation, child: child);
-        },
-        transitionDuration: const Duration(milliseconds: 1000),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

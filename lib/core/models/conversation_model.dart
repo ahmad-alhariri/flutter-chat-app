@@ -15,7 +15,8 @@ class ConversationModel {
     this.unreadCount = 0,
   });
 
-  factory ConversationModel.fromFirestore(DocumentSnapshot doc) {
+  /// Creates a [ConversationModel] instance from a Firestore document.
+  factory ConversationModel.fromMap(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return ConversationModel(
       id: doc.id,

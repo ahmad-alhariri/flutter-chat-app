@@ -1,12 +1,16 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/constants/paths.dart';
-import 'package:flutter_chat_app/ui/screens/auth/auth_viewmodel.dart';
+import 'package:flutter_chat_app/core/enums/enums.dart';
+import 'package:flutter_chat_app/core/viewmodels/auth_viewmodel.dart';
 import 'package:flutter_chat_app/ui/widgets/beizer_container_widget.dart';
 import 'package:flutter_chat_app/ui/widgets/custom_text_field.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+// ==================================================
+// PURPOSE: The UI for the registration screen.
+// ==================================================
 class SignupView extends StatefulWidget {
   final VoidCallback onToggleView;
   const SignupView({super.key, required this.onToggleView});
@@ -19,13 +23,35 @@ class _SignupViewState extends State<SignupView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _usernameController = TextEditingController();
+  late AuthViewModel _authViewModel; // Store a reference to the ViewModel
+
+  @override
+  void initState() {
+    super.initState();
+    // Get the ViewModel instance once and add the listener.
+    _authViewModel = context.read<AuthViewModel>();
+    _authViewModel.addListener(_onViewModelUpdate);
+  }
 
   @override
   void dispose() {
+    // Use the stored reference to remove the listener, avoiding context usage.
+    _authViewModel.removeListener(_onViewModelUpdate);
     _emailController.dispose();
     _passwordController.dispose();
     _usernameController.dispose();
     super.dispose();
+  }
+
+  void _onViewModelUpdate() {
+    if (_authViewModel.state == ViewState.Error && _authViewModel.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_authViewModel.errorMessage!),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
   }
 
   void _submit() async {
@@ -36,16 +62,6 @@ class _SignupViewState extends State<SignupView> {
         _passwordController.text.trim(),
         _usernameController.text.trim(),
       );
-      if (success && mounted) {
-        Navigator.of(context).pushReplacementNamed(home);
-      } else if (!success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(auth.errorMessage ?? 'An unknown error occurred.'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
     }
   }
 

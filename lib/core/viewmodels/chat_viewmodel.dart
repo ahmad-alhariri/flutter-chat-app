@@ -4,6 +4,9 @@ import 'package:flutter_chat_app/core/other/BaseViewModel.dart';
 import 'package:flutter_chat_app/core/services/auth_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 
+// ==================================================
+// PURPOSE: Manages the state and logic for a single chat conversation.
+// ==================================================
 class ChatViewModel extends BaseViewModel {
   final DatabaseService _databaseService;
   final AuthService _authService;

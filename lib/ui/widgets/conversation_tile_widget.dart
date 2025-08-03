@@ -3,11 +3,15 @@ import 'package:flutter_chat_app/core/models/user_model.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 
+// ==================================================
+// PURPOSE: A reusable widget to display a single conversation in the chat list.
+// ==================================================
 class ConversationTile extends StatelessWidget {
   final UserModel otherUser;
   final String lastMessage;
   final DateTime lastMessageTimestamp;
   final int unreadCount;
+  final VoidCallback onTap;
 
   const ConversationTile({
     super.key,
@@ -15,6 +19,7 @@ class ConversationTile extends StatelessWidget {
     required this.lastMessage,
     required this.lastMessageTimestamp,
     this.unreadCount = 0,
+    required this.onTap,
   });
 
   @override
@@ -71,9 +76,7 @@ class ConversationTile extends StatelessWidget {
           ],
         ],
       ),
-      onTap: () {
-        // TODO: Navigate to chat screen
-      },
+      onTap: onTap,
     );
   }
 }

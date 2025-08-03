@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/enums/enums.dart';
 
+// ==================================================
+// PURPOSE: A base class for all ViewModels to reduce boilerplate code.
+// It handles common state management logic (Idle, Busy, Error), so that
+// specific ViewModels only need to focus on their unique business logic.
+// ==================================================
 class BaseViewModel extends ChangeNotifier {
   ViewState _state = ViewState.Idle;
   String? _errorMessage;

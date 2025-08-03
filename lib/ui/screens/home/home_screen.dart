@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_app/core/models/conversation_model.dart';
-import 'package:flutter_chat_app/core/models/message_model.dart';
 import 'package:flutter_chat_app/core/models/user_model.dart';
 import 'package:flutter_chat_app/core/services/auth_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
-import 'package:flutter_chat_app/ui/screens/auth/auth_viewmodel.dart';
-import 'package:flutter_chat_app/ui/screens/chat/chat_screen.dart';
-import 'package:flutter_chat_app/ui/screens/home/chat_viewmodel.dart';
-import 'package:flutter_chat_app/ui/screens/home/chats_viewmodel.dart';
-import 'package:flutter_chat_app/ui/screens/home/contacts_viewmodel.dart';
-import 'package:flutter_chat_app/ui/screens/home/main_viewmodel.dart';
-import 'package:flutter_chat_app/ui/screens/home/profile_viewmodel.dart';
+import 'package:flutter_chat_app/core/viewmodels/chat_list_viewmodel.dart';
+import 'package:flutter_chat_app/core/viewmodels/contacts_viewmodel.dart';
+import 'package:flutter_chat_app/core/viewmodels/main_viewmodel.dart';
+import 'package:flutter_chat_app/core/viewmodels/profile_viewmodel.dart';
+import 'package:flutter_chat_app/ui/screens/home/chatList/chat_list_view.dart';
+import 'package:flutter_chat_app/ui/screens/home/contacts/contacts_view.dart';
+import 'package:flutter_chat_app/ui/screens/home/profile/profile_view.dart';
 import 'package:flutter_chat_app/ui/widgets/conversation_tile_widget.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+// ==================================================
+// PURPOSE: The main hub of the app for a logged-in user. It contains the
+// BottomNavigationBar and manages the different pages (Chats, Contacts, Profile).
+// ==================================================
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
 
@@ -74,9 +77,9 @@ class MainScreen extends StatelessWidget {
               controller: viewModel.pageController,
               onPageChanged: viewModel.onPageChanged,
               children: const [
-                ChatsScreen(),
-                ContactsScreen(),
-                ProfileScreen(),
+                ChatListView(),
+                ContactsView(),
+                ProfileView(),
               ],
             ),
             floatingActionButton: FloatingActionButton(
@@ -120,158 +123,3 @@ class MainScreen extends StatelessWidget {
   }
 }
 
-
-class ChatsScreen extends StatelessWidget {
-  const ChatsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final viewModel = context.watch<ChatsViewModel>();
-    return Scaffold(
-      appBar: AppBar(
-        leading: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: CircleAvatar(
-            // Placeholder for user profile picture
-            backgroundImage: NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
-          ),
-        ),
-        title: const Text('Chats', style: TextStyle(fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-        ],
-      ),
-      body: StreamBuilder<List<ConversationModel>>(
-        stream: viewModel.conversationsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No conversations yet.'));
-          }
-          final conversations = snapshot.data!;
-          return ListView.builder(
-            itemCount: conversations.length,
-            itemBuilder: (context, index) {
-              final conversation = conversations[index];
-              return ConversationInfo(conversation: conversation);
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-// Helper widget to fetch other user's info
-class ConversationInfo extends StatelessWidget {
-  final ConversationModel conversation;
-  const ConversationInfo({super.key, required this.conversation});
-
-  @override
-  Widget build(BuildContext context) {
-    final dbService = context.read<DatabaseService>();
-    final authService = context.read<AuthService>();
-    final currentUserId = authService.currentUser?.uid;
-
-    // Find the other participant's ID
-    final otherUserId = conversation.participantIds.firstWhere((id) => id != currentUserId, orElse: () => '');
-
-    if (otherUserId.isEmpty) return const SizedBox.shrink();
-
-    return FutureBuilder<UserModel?>(
-      future: dbService.getUser(otherUserId),
-      builder: (context, userSnapshot) {
-        if (!userSnapshot.hasData) {
-          return const ListTile(title: Text("Loading..."));
-        }
-        final otherUser = userSnapshot.data!;
-        return ConversationTile(
-          otherUser: otherUser,
-          lastMessage: conversation.lastMessage,
-          lastMessageTimestamp: conversation.lastMessageTimestamp.toDate(),
-          unreadCount: conversation.unreadCount,
-        );
-      },
-    );
-  }
-}
-
-class ContactsScreen extends StatelessWidget {
-  const ContactsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final viewModel = context.watch<ContactsViewModel>();
-    final dbService = context.read<DatabaseService>();
-    final currentUserId = context.read<AuthService>().currentUser?.uid;
-
-    return Scaffold(
-      appBar: AppBar(title: const Text('Contacts')),
-      body: StreamBuilder<List<UserModel>>(
-        stream: viewModel.usersStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No users found.'));
-          }
-          final users = snapshot.data!;
-          return ListView.builder(
-            itemCount: users.length,
-            itemBuilder: (context, index) {
-              final user = users[index];
-              return ListTile(
-                title: Text(user.username),
-                subtitle: Text(user.email),
-                onTap: () async {
-                  if (currentUserId == null) return;
-                  final conversationId = await dbService.createOrGetConversation(currentUserId, user.uid);
-                  Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => ChatScreen(conversationId: conversationId, otherUser: user),
-                  ));
-                },
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-
-class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final viewModel = context.watch<ProfileViewModel>();
-    final currentUser = viewModel.currentUser;
-    return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Username: ${currentUser?.displayName ?? 'N/A'}'),
-            Text('Email: ${currentUser?.email ?? 'N/A'}'),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () async {
-                await viewModel.signOut();
-                // The main listener will handle navigation
-              },
-              child: const Text('Logout'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

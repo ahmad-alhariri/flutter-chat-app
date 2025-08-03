@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+// ==================================================
+// PURPOSE: A decorative widget that creates a custom curved background shape.
+// ==================================================
 class BezierContainer extends StatelessWidget {
   const BezierContainer({super.key});
 
