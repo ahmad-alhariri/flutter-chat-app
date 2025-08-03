@@ -8,6 +8,8 @@ import 'package:flutter_chat_app/ui/widgets/custom_text_field.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
+import '../../../widgets/auth_logo_widget.dart';
+
 // ==================================================
 // PURPOSE: The UI for the registration screen.
 // ==================================================
@@ -44,7 +46,8 @@ class _SignupViewState extends State<SignupView> {
   }
 
   void _onViewModelUpdate() {
-    if (_authViewModel.state == ViewState.Error && _authViewModel.errorMessage != null) {
+    if (_authViewModel.state == ViewState.Error &&
+        _authViewModel.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_authViewModel.errorMessage!),
@@ -77,7 +80,12 @@ class _SignupViewState extends State<SignupView> {
         height: height,
         child: Stack(
           children: <Widget>[
-            const Positioned(top: 0, left: 0, right:0, child: BezierContainer()),
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: BezierContainer(),
+            ),
             Container(
               padding: EdgeInsets.symmetric(horizontal: 20.w),
               child: SingleChildScrollView(
@@ -86,14 +94,12 @@ class _SignupViewState extends State<SignupView> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     SizedBox(height: height * .2),
-                    Image.asset(logo, height: 100.h,),
-                    Text("Create Account", style: textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onBackground,
-                    )),
-                    Text("Start your journey with us", style: textTheme.titleMedium?.copyWith(
-                        color: colorScheme.onBackground.withOpacity(0.6)
-                    )),
+                    AuthLogoWidget(
+                      textTheme: textTheme,
+                      colorScheme: colorScheme,
+                      text: "Create Account",
+                      subText: "Start your journey with us",
+                    ),
                     SizedBox(height: 30.h),
                     Form(
                       key: _formKey,
@@ -103,7 +109,8 @@ class _SignupViewState extends State<SignupView> {
                             labelText: "Username",
                             prefixIcon: Icons.person_outline,
                             controller: _usernameController,
-                            validator: (v) => v!.isEmpty ? "Username is required" : null,
+                            validator: (v) =>
+                                v!.isEmpty ? "Username is required" : null,
                           ),
                           SizedBox(height: 12.h),
                           CustomTextField(
@@ -127,7 +134,9 @@ class _SignupViewState extends State<SignupView> {
                             prefixIcon: Icons.lock_outline,
                             controller: _passwordController,
                             obscureText: true,
-                            validator: (v) => v!.length < 6 ? "Password must be at least 6 characters" : null,
+                            validator: (v) => v!.length < 6
+                                ? "Password must be at least 6 characters"
+                                : null,
                           ),
                         ],
                       ),
@@ -137,12 +146,20 @@ class _SignupViewState extends State<SignupView> {
                       onPressed: viewModel.isBusy ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.symmetric(vertical: 15.h),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.r),
+                        ),
                         minimumSize: Size(double.infinity, 50.h),
                       ),
                       child: viewModel.isBusy
                           ? const CircularProgressIndicator(color: Colors.white)
-                          : Text('Register', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)),
+                          : Text(
+                              'Register',
+                              style: TextStyle(
+                                fontSize: 18.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                     SizedBox(height: height * .055),
                     RichText(
@@ -158,7 +175,8 @@ class _SignupViewState extends State<SignupView> {
                               fontSize: 16.sp,
                               fontWeight: FontWeight.w600,
                             ),
-                            recognizer: TapGestureRecognizer()..onTap = widget.onToggleView,
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = widget.onToggleView,
                           ),
                         ],
                       ),
