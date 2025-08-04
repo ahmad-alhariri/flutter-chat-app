@@ -3,11 +3,10 @@ import 'package:flutter_chat_app/core/models/user_model.dart';
 import 'package:flutter_chat_app/core/services/auth_service.dart';
 import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/viewmodels/chat_viewmodel.dart';
+import 'package:flutter_chat_app/ui/widgets/empty_state_widget.dart';
 import 'package:flutter_chat_app/ui/widgets/message_bubble_widget.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-
-import '../../../core/models/message_model.dart';
 
 class ChatScreen extends StatefulWidget {
   final UserModel otherUser;
@@ -27,6 +26,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    // Fetch the conversation ID when the screen is first created.
     final dbService = context.read<DatabaseService>();
     final currentUserId = context.read<AuthService>().currentUser?.uid;
     _conversationIdFuture = dbService.createOrGetConversation(currentUserId!, widget.otherUser.uid);
@@ -37,10 +37,12 @@ class _ChatScreenState extends State<ChatScreen> {
     return FutureBuilder<String>(
       future: _conversationIdFuture,
       builder: (context, snapshot) {
+        // Show a loading indicator while fetching the conversation ID.
         if (!snapshot.hasData) {
           return Scaffold(appBar: AppBar(), body: const Center(child: CircularProgressIndicator()));
         }
         final conversationId = snapshot.data!;
+        // Once the ID is available, provide the ChatViewModel and build the screen.
         return ChangeNotifierProvider(
           create: (context) => ChatViewModel(
             context.read(),
@@ -54,9 +56,40 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
-class _ChatScreenContent extends StatelessWidget {
+/// The main content of the chat screen, which is lifecycle-aware.
+class _ChatScreenContent extends StatefulWidget {
   final UserModel otherUser;
   const _ChatScreenContent({required this.otherUser});
+
+  @override
+  State<_ChatScreenContent> createState() => _ChatScreenContentState();
+}
+
+class _ChatScreenContentState extends State<_ChatScreenContent> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    // Add an observer to listen for app lifecycle changes.
+    WidgetsBinding.instance.addObserver(this);
+    // Mark messages as seen when the screen is first built.
+    context.read<ChatViewModel>().markMessagesAsSeen();
+  }
+
+  @override
+  void dispose() {
+    // It's crucial to remove the observer to prevent memory leaks.
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // When the app is resumed (brought to the foreground), mark messages as seen.
+    if (state == AppLifecycleState.resumed) {
+      context.read<ChatViewModel>().markMessagesAsSeen();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,31 +99,34 @@ class _ChatScreenContent extends StatelessWidget {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundImage: otherUser.profileImageUrl != null
-                  ? NetworkImage(otherUser.profileImageUrl!)
+              backgroundImage: widget.otherUser.profileImageUrl != null
+                  ? NetworkImage(widget.otherUser.profileImageUrl!)
                   : null,
-              child: otherUser.profileImageUrl == null
-                  ? Text(otherUser.username.isNotEmpty ? otherUser.username[0] : '?')
+              child: widget.otherUser.profileImageUrl == null
+                  ? Text(widget.otherUser.username.isNotEmpty ? widget.otherUser.username[0] : '?')
                   : null,
             ),
             SizedBox(width: 12.w),
-            Text(otherUser.username),
+            Text(widget.otherUser.username),
           ],
         ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<List<MessageModel>>(
-              stream: viewModel.messagesStream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+            child: Builder(
+              builder: (context) {
+                if (viewModel.isBusy) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text("Say hi!"));
+                if (viewModel.messages.isEmpty) {
+                  return const EmptyStateWidget(
+                    icon: Icons.waving_hand_outlined,
+                    title: 'Say Hi!',
+                    message: 'Be the first to send a message.',
+                  );
                 }
-                final messages = snapshot.data!;
+                final messages = viewModel.messages;
                 return ListView.builder(
                   reverse: true,
                   padding: EdgeInsets.symmetric(vertical: 10.h),
@@ -98,7 +134,11 @@ class _ChatScreenContent extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final message = messages[index];
                     final isMe = message.senderId == viewModel.currentUserId;
-                    return MessageBubble(text: message.text, isMe: isMe);
+                    return MessageBubble(
+                      text: message.text,
+                      isMe: isMe,
+                      status:message.status,
+                    );
                   },
                 );
               },

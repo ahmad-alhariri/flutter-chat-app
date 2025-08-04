@@ -22,4 +22,12 @@ class FirestoreConstants {
   static const String senderId = 'senderId';
   static const String text = 'text';
   static const String timestamp = 'timestamp';
+  static const String status = 'status';
+}
+
+class MessageState {
+  // Collections
+  static const String sent = 'sent';
+  static const String delivered = 'delivered';
+  static const String seen = 'seen';
 }

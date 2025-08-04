@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_chat_app/core/constants/firestore_constants.dart';
+import 'package:flutter_chat_app/core/enums/enums.dart';
 import 'package:flutter_chat_app/core/models/conversation_model.dart';
 import 'package:flutter_chat_app/core/models/message_model.dart';
 
@@ -143,5 +144,24 @@ class DatabaseService {
           FirestoreConstants.lastMessage: message.text,
           FirestoreConstants.lastMessageTimestamp: message.timestamp,
         });
+  }
+
+  ///Updates the status of multiple messages in a single batch operation.
+  Future<void> updateMessageStatus({
+    required String conversationId,
+    required List<String> messageIds,
+    required String status,
+  }) async {
+    if (messageIds.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final messageId in messageIds) {
+      final docRef = _firestore
+          .collection(FirestoreConstants.conversationsCollection)
+          .doc(conversationId)
+          .collection(FirestoreConstants.messagesCollection)
+          .doc(messageId);
+      batch.update(docRef, {FirestoreConstants.status: status});
+    }
+    await batch.commit();
   }
 }
