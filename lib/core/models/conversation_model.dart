@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_chat_app/core/constants/firestore_constants.dart';
 
 class ConversationModel {
   final String id;
@@ -20,9 +21,9 @@ class ConversationModel {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
     return ConversationModel(
       id: doc.id,
-      participantIds: List<String>.from(data['participantIds']),
-      lastMessage: data['lastMessage'] ?? '',
-      lastMessageTimestamp: data['lastMessageTimestamp'] ?? Timestamp.now(),
+      participantIds: List<String>.from(data[FirestoreConstants.participantIds]),
+      lastMessage: data[FirestoreConstants.lastMessage] ?? '',
+      lastMessageTimestamp: data[FirestoreConstants.lastMessageTimestamp] ?? Timestamp.now(),
       unreadCount: data['unreadCount'] ?? 0,
     );
   }

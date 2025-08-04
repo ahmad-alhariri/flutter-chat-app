@@ -24,31 +24,30 @@ class ChatListViewModel extends BaseViewModel {
   Map<String, UserModel> get userCache => _userCache;
 
   StreamSubscription? _conversationsSubscription;
+  List<ConversationModel> conversations = [];
 
   ChatListViewModel(this._databaseService, this._navigationService, this._user) {
-    getConversations();
+    _listenToConversations();
   }
 
-  Stream<List<ConversationModel>>? conversationsStream;
-
-  void getConversations() {
+  void _listenToConversations() {
+    setState(ViewState.Busy);
+    _conversationsSubscription?.cancel();
     if (_user != null) {
-      setState(ViewState.Busy);
-      _conversationsSubscription?.cancel(); // Cancel previous subscription
-      conversationsStream = _databaseService.getConversationsStream(_user!.uid);
-
-      _conversationsSubscription = conversationsStream?.listen(_onConversationsUpdated);
-
-      setState(ViewState.Idle);
+      _conversationsSubscription = _databaseService
+          .getConversationsStream(_user!.uid)
+          .listen((updatedConversations) {
+        conversations = updatedConversations;
+        _fetchUsersForConversations(conversations);
+        setState(ViewState.Idle);
+      });
     } else {
-      conversationsStream = null;
+      conversations = [];
       setState(ViewState.Idle);
     }
   }
 
-  /// Called whenever the conversations stream emits new data.
-  Future<void> _onConversationsUpdated(List<ConversationModel> conversations) async {
-    // 1. Collect all unique participant IDs that are not already in the cache.
+  Future<void> _fetchUsersForConversations(List<ConversationModel> conversations) async {
     final currentUserId = _user?.uid;
     final idsToFetch = conversations
         .expand((convo) => convo.participantIds)
@@ -56,14 +55,11 @@ class ChatListViewModel extends BaseViewModel {
         .toSet()
         .toList();
 
-    // 2. If there are new IDs to fetch, get them in a single batch.
     if (idsToFetch.isNotEmpty) {
       final newUsers = await _databaseService.getUsersIn(idsToFetch);
-      // 3. Update the cache with the newly fetched users.
       for (var user in newUsers) {
         _userCache[user.uid] = user;
       }
-      // 4. Notify the UI to rebuild with the new user data.
       notifyListeners();
     }
   }
@@ -77,4 +73,6 @@ class ChatListViewModel extends BaseViewModel {
     _conversationsSubscription?.cancel();
     super.dispose();
   }
+
 }
+

@@ -1,15 +1,58 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/core/models/conversation_model.dart';
-import 'package:flutter_chat_app/core/models/user_model.dart';
 import 'package:flutter_chat_app/core/services/auth_service.dart';
-import 'package:flutter_chat_app/core/services/database_service.dart';
 import 'package:flutter_chat_app/core/viewmodels/chat_list_viewmodel.dart';
 import 'package:flutter_chat_app/ui/widgets/conversation_tile_widget.dart';
 import 'package:flutter_chat_app/ui/widgets/empty_state_widget.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
 class ChatListView extends StatelessWidget {
   const ChatListView({super.key});
+
+  void _showNewChatMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24.r)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.chat_bubble_outline),
+                title: const Text('New Chat'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Navigate to a new chat creation screen
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.person_add_alt_1_outlined),
+                title: const Text('New Contact'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Navigate to a new contact creation screen
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.group_add_outlined),
+                title: const Text('New Community'),
+                onTap: () {
+                  Navigator.pop(context);
+                  // TODO: Navigate to a new community creation screen
+                },
+              ),
+              SizedBox(height: 16.h),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,29 +72,22 @@ class ChatListView extends StatelessWidget {
         title: const Text('Chats', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(icon: const Icon(Icons.search), onPressed: () {}),
+          IconButton(icon: const Icon(Icons.add), onPressed: () => _showNewChatMenu(context)),
         ],
       ),
-      body: StreamBuilder<List<ConversationModel>>(
-        stream: viewModel.conversationsStream,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Builder(
+        builder: (context) {
+          if (viewModel.isBusy) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snapshot.hasError) {
-            return const EmptyStateWidget(
-              icon: Icons.error_outline,
-              title: 'Something Went Wrong',
-              message: 'We couldn\'t load your conversations. Please try again later.',
-            );
-          }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          if (viewModel.conversations.isEmpty) {
             return const EmptyStateWidget(
               icon: Icons.chat_bubble_outline,
               title: 'No Conversations Yet',
               message: 'Tap the "+" button to start a new chat with a contact.',
             );
           }
-          final conversations = snapshot.data!;
+          final conversations = viewModel.conversations;
           return ListView.builder(
             itemCount: conversations.length,
             itemBuilder: (context, index) {
@@ -61,11 +97,10 @@ class ChatListView extends StatelessWidget {
 
               if (otherUserId.isEmpty) return const SizedBox.shrink();
 
-              // Get the user data from the ViewModel's cache.
               final otherUser = viewModel.userCache[otherUserId];
 
               return ConversationTile(
-                otherUser: otherUser, // Can be null while loading
+                otherUser: otherUser,
                 lastMessage: conversation.lastMessage,
                 lastMessageTimestamp: conversation.lastMessageTimestamp.toDate(),
                 unreadCount: conversation.unreadCount,

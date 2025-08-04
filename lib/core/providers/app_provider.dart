@@ -9,7 +9,9 @@ import 'package:flutter_chat_app/core/viewmodels/chat_list_viewmodel.dart';
 import 'package:flutter_chat_app/core/viewmodels/contacts_viewmodel.dart';
 import 'package:flutter_chat_app/core/viewmodels/profile_viewmodel.dart';
 import 'package:flutter_chat_app/core/viewmodels/splash_viewmodel.dart';
+import 'package:flutter_chat_app/core/viewmodels/theme_viewmodel.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // ==================================================
 // PURPOSE: Centralizes all dependency injection providers for the app.
@@ -31,6 +33,10 @@ class AppProviders extends StatelessWidget {
         Provider<DatabaseService>(
           create: (_) => DatabaseService(FirebaseFirestore.instance),
         ),
+        FutureProvider<SharedPreferences?>(
+          create: (_) => SharedPreferences.getInstance(),
+          initialData: null,
+        ),
 
         // --- AUTH-INDEPENDENT VIEWMODELS ---
         ChangeNotifierProvider<SplashViewModel>(
@@ -44,6 +50,13 @@ class AppProviders extends StatelessWidget {
             context.read<AuthService>(),
             context.read<DatabaseService>(),
             context.read<NavigationService>(),
+          ),
+        ),
+        ChangeNotifierProxyProvider<SharedPreferences?, ThemeViewModel>(
+          create: (context) => ThemeViewModel(context.read<SharedPreferences?>()),
+          update: (context, prefs, previous) => ThemeViewModel(
+            prefs,
+            initialTheme: previous?.themeMode ?? ThemeMode.system,
           ),
         ),
 
@@ -87,3 +100,4 @@ class AppProviders extends StatelessWidget {
     );
   }
 }
+

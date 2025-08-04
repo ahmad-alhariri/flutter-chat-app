@@ -5,6 +5,7 @@ import 'package:flutter_chat_app/core/constants/themes.dart';
 import 'package:flutter_chat_app/core/providers/app_provider.dart';
 import 'package:flutter_chat_app/core/services/navigation_service.dart';
 import 'package:flutter_chat_app/core/utils/route_utils.dart';
+import 'package:flutter_chat_app/core/viewmodels/theme_viewmodel.dart';
 import 'package:flutter_chat_app/firebase_options.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +26,8 @@ class ChatApp extends StatelessWidget {
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (context, child) {
+          // Consume the ThemeViewModel to reactively update the theme.
+          final themeViewModel = context.watch<ThemeViewModel>();
           return MaterialApp(
             debugShowCheckedModeBanner: false,
             title: 'Chat App',
@@ -33,8 +36,7 @@ class ChatApp extends StatelessWidget {
             // The darkTheme property is for the dark theme.
             darkTheme: AppTheme.darkTheme,
             // themeMode controls which theme to use.
-            // ThemeMode.system will automatically switch based on the device's setting.
-            themeMode: ThemeMode.light,
+            themeMode: themeViewModel.themeMode,
             // The navigatorKey is essential for the NavigationService to work.
             navigatorKey: context.read<NavigationService>().navigatorKey,
             // The onGenerateRoute tells the MaterialApp to use our centralized RouteGenerator.
